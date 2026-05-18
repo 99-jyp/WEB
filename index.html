@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospital Leave Request</title>
+  <style>
+    :root {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1b1f24;
+      background: #f6f8fb;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    h1, h2 {
+      margin: 0 0 12px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: #57606a;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      font-size: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    input, select, textarea, button {
+      font: inherit;
+      padding: 8px 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    button {
+      cursor: pointer;
+      background: #0969da;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      width: fit-content;
+      padding: 10px 18px;
+    }
+
+    .message {
+      min-height: 20px;
+      font-size: 14px;
+      color: #0969da;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #d8dee4;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f6f8fa;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>Hospital Leave Request</h1>
+      <p>For internal hospital network use only.</p>
+      <form id="leaveRequestForm">
+        <label>
+          Staff Name
+          <input name="staffName" required />
+        </label>
+        <label>
+          Staff ID
+          <input name="staffId" required />
+        </label>
+        <label>
+          Department
+          <input name="department" required />
+        </label>
+        <label>
+          Leave Type
+          <select name="leaveType" required>
+            <option value="">Select leave type</option>
+            <option>Annual Leave</option>
+            <option>Sick Leave</option>
+            <option>Family Care Leave</option>
+            <option>Emergency Leave</option>
+          </select>
+        </label>
+        <label>
+          Start Date
+          <input type="date" name="startDate" required />
+        </label>
+        <label>
+          End Date
+          <input type="date" name="endDate" required />
+        </label>
+        <label class="full">
+          Reason
+          <textarea name="reason" required></textarea>
+        </label>
+        <label class="full">
+          Emergency Contact
+          <input name="emergencyContact" placeholder="Name and phone" required />
+        </label>
+        <button type="submit" class="full">Submit Request</button>
+      </form>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h2>Submitted Requests</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Submitted</th>
+            <th>Staff</th>
+            <th>Department</th>
+            <th>Leave</th>
+            <th>Period</th>
+            <th>Reason</th>
+            <th>Emergency Contact</th>
+          </tr>
+        </thead>
+        <tbody id="requestsTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('leaveRequestForm');
+    const message = document.getElementById('message');
+    const tableBody = document.getElementById('requestsTableBody');
+
+    const STORAGE_KEY = 'hospitalLeaveRequests';
+
+    function loadRequests() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRequests(requests) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+    }
+
+    function createCell(text) {
+      const cell = document.createElement('td');
+      cell.textContent = text;
+      return cell;
+    }
+
+    function renderRequests() {
+      const requests = loadRequests();
+      tableBody.textContent = '';
+
+      requests.forEach((request) => {
+        const row = document.createElement('tr');
+        row.appendChild(createCell(request.submittedAt));
+        row.appendChild(createCell(`${request.staffName} (${request.staffId})`));
+        row.appendChild(createCell(request.department));
+        row.appendChild(createCell(request.leaveType));
+        row.appendChild(createCell(`${request.startDate} to ${request.endDate}`));
+        row.appendChild(createCell(request.reason));
+        row.appendChild(createCell(request.emergencyContact));
+        tableBody.appendChild(row);
+      });
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(form);
+      const request = {
+        staffName: String(formData.get('staffName')).trim(),
+        staffId: String(formData.get('staffId')).trim(),
+        department: String(formData.get('department')).trim(),
+        leaveType: String(formData.get('leaveType')).trim(),
+        startDate: String(formData.get('startDate')).trim(),
+        endDate: String(formData.get('endDate')).trim(),
+        reason: String(formData.get('reason')).trim(),
+        emergencyContact: String(formData.get('emergencyContact')).trim(),
+        submittedAt: new Date().toLocaleString(),
+      };
+
+      if (request.endDate < request.startDate) {
+        message.textContent = 'End date must be on or after start date.';
+        return;
+      }
+
+      const requests = loadRequests();
+      requests.unshift(request);
+      saveRequests(requests);
+      renderRequests();
+
+      form.reset();
+      message.textContent = 'Leave request submitted successfully.';
+    });
+
+    renderRequests();
+  </script>
+</body>
+</html>
