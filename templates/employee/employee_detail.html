@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ employee.name }} 상세</h2>
+<p><strong>사번:</strong> {{ employee.employee_number }}</p>
+<p><strong>부서:</strong> {{ employee.department }}</p>
+<p><strong>직급:</strong> {{ employee.position }}</p>
+<p><strong>입사일:</strong> {{ employee.hire_date }}</p>
+<p><strong>재직상태:</strong> {{ employee.get_employment_status_display }}</p>
+
+{% if request.user.is_staff %}
+<p class="mt-16">
+    <a class="btn" href="{% url 'employee:update' employee.pk %}">직원 정보 수정</a>
+    <a class="btn btn-danger ml-6" href="{% url 'employee:delete' employee.pk %}">삭제</a>
+</p>
+{% endif %}
+
+<h3>인사기록</h3>
+{% if request.user.is_staff %}
+<p><a class="btn" href="{% url 'employee:hr_record_create' employee.pk %}">인사기록 추가</a></p>
+{% endif %}
+<table>
+    <thead>
+        <tr>
+            <th>연도</th>
+            <th>부서변경</th>
+            <th>직급변경</th>
+            <th>메모</th>
+            {% if request.user.is_staff %}<th>관리</th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+    {% for record in hr_records %}
+        <tr>
+            <td>{{ record.year }}</td>
+            <td>{{ record.department_change|default:'-' }}</td>
+            <td>{{ record.position_change|default:'-' }}</td>
+            <td>{{ record.memo|default:'-' }}</td>
+            {% if request.user.is_staff %}
+            <td>
+                <a class="btn" href="{% url 'employee:hr_record_update' employee.pk record.pk %}">수정</a>
+                <a class="btn btn-danger" href="{% url 'employee:hr_record_delete' employee.pk record.pk %}">삭제</a>
+            </td>
+            {% endif %}
+        </tr>
+    {% empty %}
+        <tr><td colspan="5">인사기록이 없습니다.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h3 class="mt-24">최근 휴가 신청</h3>
+<table>
+    <thead>
+        <tr>
+            <th>기간</th>
+            <th>종류</th>
+            <th>상태</th>
+            <th>승인자</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for leave in leave_requests %}
+        <tr>
+            <td>{{ leave.start_date }} ~ {{ leave.end_date }}</td>
+            <td>{{ leave.get_leave_type_display }}</td>
+            <td>{{ leave.get_status_display }}</td>
+            <td>{{ leave.approver|default:'-' }}</td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="4">휴가 신청 내역이 없습니다.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

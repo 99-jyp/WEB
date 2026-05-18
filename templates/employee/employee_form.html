@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="employee-form-shell">
+    <div class="employee-form-head">
+        <h2>{{ title }}</h2>
+        <p class="lead">직원 기본 정보를 입력하고 저장해 주세요.</p>
+    </div>
+
+    <div class="employee-form-panel">
+        <form method="post" class="employee-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <ul class="employee-form-errors">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% for field in form %}
+            <div class="form-row">
+                <label class="row-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <div class="field-wrap">
+                    {{ field }}
+                    {% if field.help_text %}
+                    <p class="field-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                    <ul class="field-errors">
+                        {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn">저장</button>
+                <a href="{% url 'employee:list' %}" class="btn btn-muted">취소</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

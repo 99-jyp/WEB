@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block body_class %}login-page{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+
+    <div class="auth-box">
+        <h2>로그인</h2>
+        <p class="lead">바른유병원</p>
+
+        {% if request.GET.logged_out %}
+        <div class="message message-success">로그아웃되었습니다.</div>
+        {% endif %}
+
+        {% if request.GET.signed_up %}
+        <div class="message message-success">회원가입이 완료되었습니다. 로그인해 주세요.</div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <ul class="errorlist">
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <p>
+                <label for="{{ form.username.id_for_label }}">사번</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </p>
+
+            <p>
+                <label for="{{ form.password.id_for_label }}">비밀번호</label>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </p>
+
+            {% for hidden in form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+            <button type="submit" class="btn full">로그인</button>
+        </form>
+
+        <p class="muted-link">
+            계정이 없나요? <a href="{% url 'signup' %}">회원가입</a>
+        </p>
+    </div>
+
+</div>
+{% endblock %}

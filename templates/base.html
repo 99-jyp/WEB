@@ -1,0 +1,61 @@
+﻿{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>인사/휴가 관리 시스템</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if request.path != '/accounts/login/' %}
+<header>
+    <nav class="top-nav">
+        <a class="brand-link" href="/">guide</a>
+        <div class="nav-main">
+        {% if request.user.is_authenticated %}
+            {% if request.user.is_staff %}
+                <a class="nav-item" href="/">홈</a>
+                <a class="nav-item" href="/employees/">직원</a>
+                <a class="nav-item" href="{% url 'employee:create' %}">직원 등록</a>
+                <a class="nav-item" href="/leave/request/">휴가 신청</a>
+                <a class="nav-item" href="/leave/">휴가신청 목록</a>
+                <a class="nav-item" href="{% url 'leave_app:export_csv' %}">엑셀 다운</a>
+                <a class="nav-item" href="/admin/">ADMIN</a>
+            {% else %}
+                <a class="nav-item" href="/">홈</a>
+                <a class="nav-item" href="{% url 'leave_app:request_create' %}">휴가신청</a>
+                <a class="nav-item" href="{% url 'leave_app:list' %}">휴가신청목록</a>
+            {% endif %}
+        {% else %}
+            <a class="nav-item" href="/">홈</a>
+            <a class="nav-item" href="/accounts/login/">로그인</a>
+            <a class="nav-item" href="{% url 'signup' %}">회원가입</a>
+        {% endif %}
+        </div>
+
+        {% if request.user.is_authenticated %}
+        <div class="nav-auth">
+            <span class="user-badge">{% firstof request.user.employee_profile.name request.user.first_name request.user.username %} 님</span>
+            <a class="nav-item" href="{% url 'my_page' %}">마이페이지</a>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-link-btn">로그아웃</button>
+            </form>
+        </div>
+        {% endif %}
+    </nav>
+</header>
+{% endif %}
+<main class="container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message message-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>

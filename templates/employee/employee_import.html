@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>직원 CSV 업로드</h2>
+<p>엑셀에서 CSV UTF-8 형식으로 저장한 파일을 업로드하세요.</p>
+<p>필수 헤더: <strong>name, employee_number, department, position, hire_date, employment_status</strong></p>
+<p>예시: 홍길동,1001,총무과,주임,2024-03-01,active</p>
+
+<form method="post" enctype="multipart/form-data" class="mt-14">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".csv" required>
+    <button type="submit" class="btn ml-8">업로드</button>
+</form>
+
+{% if result %}
+<div class="upload-result-box">
+    <p>신규 등록: {{ result.created }}건</p>
+    <p>기존 수정: {{ result.updated }}건</p>
+    <p>실패: {{ result.failed }}건</p>
+</div>
+{% endif %}
+
+{% if errors %}
+<div class="upload-error-box">
+    <p><strong>오류 목록</strong></p>
+    <ul>
+    {% for err in errors %}
+        <li>{{ err }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<p class="mt-16"><a href="{% url 'employee:list' %}">직원 목록으로 돌아가기</a></p>
+{% endblock %}

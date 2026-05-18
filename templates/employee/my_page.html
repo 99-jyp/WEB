@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="mypage-shell">
+    <div class="mypage-head">
+        <div>
+            <h2>마이페이지</h2>
+            <p class="lead">내 정보와 계정 설정을 한 곳에서 관리할 수 있습니다.</p>
+        </div>
+    </div>
+
+    <div class="mypage-grid">
+        <section class="mypage-card">
+            <h3>내 정보</h3>
+            <dl class="mypage-info-list">
+                <div class="mypage-info-row">
+                    <dt>이름</dt>
+                    <dd>{% firstof employee.name request.user.first_name request.user.username %}</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>사번(아이디)</dt>
+                    <dd>{{ request.user.username }}</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>부서</dt>
+                    <dd>{% if employee %}{{ employee.department }}{% else %}<span class="mypage-empty-value">미연결</span>{% endif %}</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>직급</dt>
+                    <dd>{% if employee %}{{ employee.position }}{% else %}<span class="mypage-empty-value">미연결</span>{% endif %}</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>입사일</dt>
+                    <dd>{% if employee %}{{ employee.hire_date }}{% else %}<span class="mypage-empty-value">미연결</span>{% endif %}</dd>
+                </div>
+                <div class="mypage-info-row">
+                    <dt>재직상태</dt>
+                    <dd>
+                        {% if employee %}
+                            <span class="{% if employee.employment_status == 'active' %}status-approved{% elif employee.employment_status == 'leave' %}status-pending{% else %}status-canceled{% endif %}">
+                                {{ employee.get_employment_status_display }}
+                            </span>
+                        {% else %}
+                            <span class="mypage-empty-value">미연결</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+
+            {% if not employee %}
+            <p class="mypage-empty">직원 정보가 연결되지 않아 일부 항목이 표시되지 않습니다. 관리자에게 계정 연결을 요청해 주세요.</p>
+            {% endif %}
+        </section>
+
+        <aside class="mypage-card mypage-card-actions">
+            <h3>계정 설정</h3>
+            <p class="mypage-subtext">보안을 위해 비밀번호를 주기적으로 변경해 주세요.</p>
+            <div class="mypage-actions">
+                <a class="btn" href="{% url 'password_change' %}">비밀번호 변경</a>
+                <a class="btn btn-muted" href="/">홈으로</a>
+            </div>
+
+            <div class="mypage-meta">
+                <p><strong>마지막 로그인</strong></p>
+                <p>{% if request.user.last_login %}{{ request.user.last_login|date:'Y-m-d H:i' }}{% else %}기록 없음{% endif %}</p>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

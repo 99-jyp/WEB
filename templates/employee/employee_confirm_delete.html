@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>직원 삭제 확인</h2>
+<p><strong>{{ employee.name }}</strong> ({{ employee.employee_number }}) 직원을 정말 삭제하시겠습니까?</p>
+<p>관련된 인사기록과 휴가 신청 내역도 모두 삭제됩니다.</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">삭제</button>
+    <a href="{% url 'employee:detail' employee.pk %}" class="ml-10">취소</a>
+</form>
+{% endblock %}

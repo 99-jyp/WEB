@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="leave-request-shell">
+    <div class="leave-request-layout">
+        <div class="leave-request-panel">
+            <h2 class="leave-request-title">휴가 신청</h2>
+            <p class="lead">기간, 휴가 종류, 사유를 입력해 신청을 등록합니다.</p>
+
+            {% if remaining is not None %}
+            <p class="key-value">
+                올해 잔여 연차: <strong>{{ remaining }}일</strong>
+            </p>
+            {% endif %}
+
+            <form method="post" class="leave-request-form" id="leaveRequestForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="message message-error">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-row">
+                    <label class="row-label" for="{{ form.leave_type.id_for_label }}">휴가 종류</label>
+                    <div class="field-wrap">
+                        {{ form.leave_type }}
+                        {% if form.leave_type.errors %}
+                        <ul class="field-errors">
+                            {% for error in form.leave_type.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="row-label" for="{{ form.start_date.id_for_label }}">시작일</label>
+                    <div class="field-wrap">
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                        <ul class="field-errors">
+                            {% for error in form.start_date.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <p class="row-label">사용 기간</p>
+                    <p class="usage-days" id="usageDays">-</p>
+                </div>
+
+                <div class="form-row">
+                    <label class="row-label" for="{{ form.end_date.id_for_label }}">종료일</label>
+                    <div class="field-wrap">
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                        <ul class="field-errors">
+                            {% for error in form.end_date.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="row-label" for="{{ form.leave_reason.id_for_label }}">휴가 사유</label>
+                    <div class="field-wrap">
+                        {{ form.leave_reason }}
+                        {% if form.leave_reason.errors %}
+                        <ul class="field-errors">
+                            {% for error in form.leave_reason.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a class="btn btn-muted" href="{% url 'leave_app:list' %}">취소</a>
+                    <button type="submit" class="btn">휴가 신청하기</button>
+                </div>
+            </form>
+        </div>
+
+        <aside class="leave-history-panel">
+            <h3 class="history-title">나의 휴가신청내역</h3>
+            <p class="history-lead">최근 신청 순으로 최대 8건을 표시합니다.</p>
+
+            {% if my_leave_history %}
+            <ul class="history-list">
+                {% for leave in my_leave_history %}
+                <li class="history-item">
+                    <p class="history-requested"><strong>신청일</strong> {{ leave.requested_at|date:"Y-m-d H:i" }}</p>
+                    <p class="history-period"><strong>휴가기간</strong> {{ leave.start_date|date:"Y-m-d" }} ~ {{ leave.end_date|date:"Y-m-d" }}</p>
+                    <div class="history-meta">
+                        <span class="history-chip status-{{ leave.status }}">{{ leave.get_status_display }}</span>
+                        <span class="history-chip">{{ leave.get_leave_type_display }}</span>
+                        <span class="history-chip">{{ leave.days_count }}일</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <a class="btn btn-muted history-link" href="{% url 'leave_app:list' %}">전체 신청내역 보기</a>
+            {% elif employee %}
+            <p class="history-empty">아직 휴가 신청 내역이 없습니다.</p>
+            {% else %}
+            <p class="history-empty">현재 계정에 연결된 직원 정보가 없어 내역을 표시할 수 없습니다.</p>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const startInput = document.getElementById('{{ form.start_date.id_for_label }}');
+        const endInput = document.getElementById('{{ form.end_date.id_for_label }}');
+        const leaveTypeInput = document.getElementById('{{ form.leave_type.id_for_label }}');
+        const usageDaysEl = document.getElementById('usageDays');
+
+        function parseDate(value) {
+            if (!value) {
+                return null;
+            }
+            const parts = value.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(Number.isNaN)) {
+                return null;
+            }
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function countBusinessDays(start, end) {
+            let count = 0;
+            const cursor = new Date(start.getTime());
+            while (cursor <= end) {
+                const weekday = cursor.getDay();
+                if (weekday !== 0 && weekday !== 6) {
+                    count += 1;
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+            return count;
+        }
+
+        function updateUsageDays() {
+            if (!usageDaysEl || !startInput || !endInput || !leaveTypeInput) {
+                return;
+            }
+
+            const start = parseDate(startInput.value);
+            const end = parseDate(endInput.value);
+            const leaveType = leaveTypeInput.value;
+
+            if (!start || !end) {
+                usageDaysEl.textContent = '-';
+                return;
+            }
+
+            if (end < start) {
+                usageDaysEl.textContent = '날짜 확인';
+                return;
+            }
+
+            if (leaveType === 'half_day') {
+                usageDaysEl.textContent = '0.5일';
+                return;
+            }
+
+            const days = countBusinessDays(start, end);
+            usageDaysEl.textContent = days + '일';
+        }
+
+        updateUsageDays();
+        startInput.addEventListener('change', updateUsageDays);
+        endInput.addEventListener('change', updateUsageDays);
+        leaveTypeInput.addEventListener('change', updateUsageDays);
+    })();
+</script>
+{% endblock %}

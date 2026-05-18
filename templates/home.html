@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>바른유병원</h1>
+<p class="lead">웹에서 직원 정보, 인사기록, 휴가 신청/승인을 통합 관리합니다.</p>
+<div class="form-card">
+<h3>바로가기</h3>
+{% if request.user.is_staff %}
+<div class="page-tools">
+    <a class="btn" href="{% url 'my_page' %}">마이페이지</a>
+    <a class="btn" href="/employees/">직원 목록 보기</a>
+    <a class="btn" href="/leave/request/">휴가 신청</a>
+    <a class="btn" href="/leave/">휴가신청 목록</a>
+</div>
+{% elif request.user.is_authenticated %}
+<div class="page-tools">
+    <a class="btn" href="{% url 'my_page' %}">마이페이지</a>
+    <a class="btn" href="{% url 'leave_app:request_create' %}">휴가신청</a>
+    <a class="btn btn-muted" href="{% url 'leave_app:list' %}">신청내역</a>
+</div>
+{% else %}
+<div class="page-tools">
+    <a class="btn" href="/accounts/login/">로그인</a>
+    <a class="btn btn-muted" href="{% url 'signup' %}">회원가입</a>
+</div>
+{% endif %}
+</div>
+{% endblock %}

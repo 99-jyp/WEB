@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>직원 목록</h2>
+<p class="lead">직원 정보 검색, 상태 필터링, 등록/수정/삭제를 한 화면에서 처리합니다.</p>
+{% if request.user.is_staff %}
+<div class="page-tools">
+    <a class="btn" href="{% url 'employee:create' %}">+ 직원 등록</a>
+    <a class="btn" href="{% url 'employee:import_csv' %}">CSV 업로드</a>
+    <a class="btn" href="{% url 'employee:export_csv' %}">CSV 다운로드</a>
+    <a class="btn" href="{% url 'employee:user_accounts_export_csv' %}">계정 CSV 다운로드</a>
+</div>
+{% endif %}
+
+<!-- 검색 + 필터 -->
+<form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="이름 검색">
+    <select name="department" onchange="this.form.submit()">
+        <option value="">전체 부서</option>
+        {% for dept in departments %}
+        <option value="{{ dept }}" {% if current_dept == dept %}selected{% endif %}>{{ dept }}</option>
+        {% endfor %}
+    </select>
+    <select name="status" onchange="this.form.submit()">
+        <option value="">전체 상태</option>
+        <option value="active" {% if current_status == "active" %}selected{% endif %}>재직</option>
+        <option value="leave" {% if current_status == "leave" %}selected{% endif %}>휴직</option>
+        <option value="resigned" {% if current_status == "resigned" %}selected{% endif %}>퇴사</option>
+    </select>
+    <button type="submit" class="btn">검색</button>
+    <a href="{% url 'employee:list' %}" class="muted-link">초기화</a>
+</form>
+
+<div class="table-wrap">
+<table class="employee-table">
+    <thead>
+        <tr>
+            <th>이름</th>
+            <th>사번</th>
+            <th>부서</th>
+            <th>직급</th>
+            <th>재직상태</th>
+            {% if request.user.is_staff %}<th>관리</th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+    {% for employee in employees %}
+        <tr>
+            <td><a href="/employees/{{ employee.pk }}/">{{ employee.name }}</a></td>
+            <td>{{ employee.employee_number }}</td>
+            <td>{{ employee.department }}</td>
+            <td>{{ employee.position }}</td>
+            <td>{{ employee.get_employment_status_display }}</td>
+            {% if request.user.is_staff %}
+            <td>
+                <div class="action-group">
+                    <a class="btn" href="{% url 'employee:update' employee.pk %}">수정</a>
+                    <a class="btn btn-danger" href="{% url 'employee:delete' employee.pk %}">삭제</a>
+                </div>
+            </td>
+            {% endif %}
+        </tr>
+    {% empty %}
+        <tr><td colspan="6">등록된 직원이 없습니다.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pager">
+    {% if page_obj.has_previous %}
+    <a class="btn" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_dept %}&department={{ current_dept|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}">이전</a>
+    {% endif %}
+
+    <span class="page-info">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 페이지</span>
+
+    {% if page_obj.has_next %}
+    <a class="btn" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_dept %}&department={{ current_dept|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}">다음</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

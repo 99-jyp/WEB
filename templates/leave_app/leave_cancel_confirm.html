@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>휴가 신청 취소</h2>
+<p><strong>{{ leave.employee.name }}</strong>님의 휴가 신청을 취소하시겠습니까?</p>
+<p>{{ leave.start_date }} ~ {{ leave.end_date }} ({{ leave.get_leave_type_display }}, {{ leave.days_count }}일)</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">취소 확정</button>
+    <a href="{% url 'leave_app:list' %}" class="ml-10">돌아가기</a>
+</form>
+{% endblock %}

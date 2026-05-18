@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{% if leave.status == 'pending' %}휴가 반려{% else %}휴가 반려 정정{% endif %}</h2>
+<p>
+    <strong>{{ leave.employee.name }}</strong>의 휴가 신청
+    ({{ leave.start_date }} ~ {{ leave.end_date }}, {{ leave.get_leave_type_display }})
+    을 반려 상태로 저장합니다.
+</p>
+{% if leave.status != 'pending' %}
+<p class="text-muted-666">현재 상태: {{ leave.get_status_display }} → 반려</p>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-danger">{% if leave.status == 'pending' %}반려 확정{% else %}반려로 정정{% endif %}</button>
+    <a href="{% url 'leave_app:list' %}" class="ml-10">취소</a>
+</form>
+{% endblock %}

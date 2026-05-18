@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+
+    <div class="auth-box">
+        <h2>회원가입</h2>
+        <p class="lead">가입 신청 후 관리자가 승인하면 계정이 생성됩니다.</p>
+
+        {% if form.non_field_errors %}
+        <div class="message message-error">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn full">가입하기</button>
+        </form>
+
+        <p class="muted-link">
+            <a href="/accounts/login/">돌아가기</a>
+        </p>
+    </div>
+
+</div>
+{% endblock %}

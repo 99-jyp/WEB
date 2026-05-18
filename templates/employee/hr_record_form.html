@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ title }} - {{ employee.name }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn">저장</button>
+    <a href="{% url 'employee:detail' employee.pk %}" class="ml-10">취소</a>
+</form>
+{% endblock %}

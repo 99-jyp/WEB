@@ -1,0 +1,231 @@
+인사/휴가 관리 시스템 관리자 기능 가이드
+최종 수정일: 2026-04-22
+
+==================================================
+1) 접속 및 인증
+==================================================
+
+1. 기본 접속 주소
+- 메인: http://192.168.40.145:8000/
+- 로그인: http://192.168.40.145:8000/accounts/login/
+- Django 관리자: http://192.168.40.145:8000/admin/
+
+2. 관리자 권한 개념
+- 대부분의 운영 기능은 스태프 계정(is_staff=True)에서 사용 가능합니다.
+- Django 관리자(/admin/) 전체 권한은 보통 슈퍼유저(is_superuser=True)가 필요합니다.
+
+3. 세션 관련 기능
+- 비밀번호 변경: /accounts/password_change/
+- 로그아웃: 상단 메뉴 버튼(POST 방식)
+- 최초 로그인 비밀번호 변경은 현재 권장사항이며, 시스템에서 강제하지 않습니다.
+- /accounts/password_change/에서는 비밀번호 복잡도 정책을 강제하지 않습니다.
+
+==================================================
+2) 스태프 상단 메뉴 기능
+==================================================
+
+스태프 계정 로그인 시 상단에서 바로 접근 가능:
+- 직원 목록: /employees/
+- 직원 등록: /employees/create/
+- 휴가 목록: /leave/
+- 휴가 신청: /leave/request/
+- 휴가 CSV 다운로드: /leave/export/
+- 관리자 페이지: /admin/
+
+참고:
+- 로그인 페이지(/accounts/login/)에서는 상단 메뉴가 숨김 처리됩니다.
+- 일반 직원 로그인 시 상단 메뉴는 "홈", "휴가신청", "휴가신청목록"만 노출됩니다.
+
+==================================================
+3) 직원 관리 기능 (스태프)
+==================================================
+
+1. 직원 목록
+- URL: /employees/
+- 기능:
+  - 이름 검색(q)
+  - 부서 필터
+  - 재직상태 필터(active/leave/resigned)
+  - 페이지네이션(페이지당 15건)
+
+2. 직원 등록/수정/삭제
+- 등록: /employees/create/
+- 수정: /employees/<pk>/edit/
+- 삭제: /employees/<pk>/delete/
+
+3. 직원 상세
+- URL: /employees/<pk>/
+- 제공 정보:
+  - 기본 인사 정보
+  - 인사기록(HRRecord)
+  - 최근 휴가 신청 내역
+
+==================================================
+4) 인사기록(HR) 관리 기능 (스태프)
+==================================================
+
+직원 상세 화면에서 처리:
+- 추가: /employees/<emp_pk>/hr/create/
+- 수정: /employees/<emp_pk>/hr/<pk>/edit/
+- 삭제: /employees/<emp_pk>/hr/<pk>/delete/
+
+==================================================
+5) 직원 CSV 기능 (스태프)
+==================================================
+
+1. 직원 CSV 다운로드
+- URL: /employees/export/
+- 파일명: employees.csv
+- 컬럼:
+  name, employee_number, department, position, hire_date, employment_status
+
+2. 직원 CSV 업로드
+- URL: /employees/import/
+- 지원 인코딩:
+  - utf-8-sig (권장)
+  - cp949
+  - euc-kr
+
+- 헤더 필수값:
+  name, employee_number, department, position, hire_date, employment_status
+
+- 검증 및 저장 규칙:
+  - 필수: name, employee_number, department, hire_date, employment_status
+  - position 공란 허용(공란이면 "미입력"으로 저장)
+  - department 값은 정규화/자동 매핑 후 표준 부서값으로 저장
+  - employment_status 허용값: active, leave, resigned
+  - employee_number 기준 update_or_create로 신규/수정 처리
+
+==================================================
+6) 사용자 계정 CSV 다운로드 (스태프)
+==================================================
+
+- URL: /employees/users/export/
+- 파일명: user_accounts.csv
+- 포함 정보:
+  user_id, username, first_name,
+  is_staff, is_superuser, is_active,
+  last_login, date_joined,
+  연결된 직원 정보(employee_number, employee_name, department, position, employment_status)
+
+보안 참고:
+- 비밀번호 원문은 절대 포함되지 않습니다.
+
+==================================================
+7) 휴가 관리 기능 (스태프)
+==================================================
+
+1. 휴가 목록
+- URL: /leave/
+- 스태프는 전체 휴가 신청 조회 가능
+- 일반 직원은 본인 신청 내역만 조회 가능
+- 필터:
+  - 상태(pending/approved/rejected/canceled)
+  - 부서
+- 페이지네이션: 페이지당 15건
+
+2. 승인/반려
+- 승인: /leave/<pk>/approve/
+- 반려: /leave/<pk>/reject/
+- 규칙:
+  - pending 상태만 승인/반려 가능
+  - 이미 처리된 건 재처리 불가
+  - 반려 시 반려 사유 입력 필요
+  - 승인/반려 처리 내역은 AuditLog에 기록(처리자, 시각, 대상)
+
+3. 휴가 CSV 다운로드
+- URL: /leave/export/
+- 파일명: leave_requests.csv
+- 포함 컬럼:
+  직원, 사번, 부서, 시작일, 종료일, 종류, 휴가사유,
+  사용일수, 상태, 승인자, 반려사유, 신청일
+
+4. 휴가 신청 생성 규칙
+- URL: /leave/request/
+- 현재 구조는 로그인 사용자와 연결된 employee_profile 기준으로 신청됩니다.
+- 사용자 계정에 employee_profile 연결이 없으면 신청이 차단되고 안내 메시지가 표시됩니다.
+
+==================================================
+8) 가입신청 승인 흐름 (관리자 페이지)
+==================================================
+
+현재 회원가입은 "신청 -> 관리자 승인" 방식입니다.
+
+1. 사용자 측
+- 회원가입 페이지: /accounts/signup/
+- 제출 시 User를 즉시 만들지 않고 SignupRequest(pending)를 생성
+
+2. 관리자 측
+- Django admin 모델: SignupRequest
+- 관리자 액션:
+  - approve_requests (승인)
+  - reject_requests (반려)
+
+3. 승인 시 동작
+- username=employee_number 형태로 User 생성
+- 가입신청의 password_hash를 User 비밀번호 해시로 적용
+- Employee가 없으면 신규 생성, 있으면 미연결 상태일 때 User 연결
+- SignupRequest 상태를 approved로 변경하고 처리자/처리시각 기록
+- 실패 시 admin_memo에 실패 사유 기록
+- 승인/반려 처리 내역은 AuditLog에 기록(처리자, 시각, 대상)
+
+4. 반려 시 동작
+- SignupRequest 상태를 rejected로 변경
+- 처리자/처리시각 기록
+
+==================================================
+9) Django 관리자 페이지에서 관리 중인 주요 모델
+==================================================
+
+- Employee
+- HRRecord
+- SignupRequest
+- LeaveRequest
+- AuditLog (감사로그)
+- Django 기본 auth 모델(Users, Groups)
+
+==================================================
+10) 관리자 자주 사용하는 명령어
+==================================================
+
+1. 서버 실행
+d:/WEB/.venv/Scripts/python.exe manage.py runserver 0.0.0.0:8000
+
+2. 시스템 점검
+d:/WEB/.venv/Scripts/python.exe manage.py check
+
+3. 비밀번호 변경
+- d:/WEB/.venv/Scripts/python.exe manage.py changepassword <username>
+
+4. 슈퍼유저 생성
+- d:/WEB/.venv/Scripts/python.exe manage.py createsuperuser
+
+5. 전 직원 비밀번호 초기화(초기값: 1)
+- d:/WEB/.venv/Scripts/python.exe manage.py reset_employee_passwords
+- 실행 시 모든 직원 계정의 "최초 로그인 비밀번호 변경 필요" 플래그가 켜지지만,
+  현재 시스템에서는 비밀번호 변경 화면으로 강제 이동되지 않습니다.
+
+==================================================
+11) 운영 메모
+==================================================
+
+- 본 문서는 현재 코드 기준 동작을 정리한 운영 가이드입니다.
+- 권한/프로세스 변경 시 이 문서도 함께 업데이트하세요.
+
+
+==================================================
+11) 수정
+==================================================
+
+백엔드 (로직)
+models.py — LeaveRequest 모델
+views.py — 뷰 함수들 (신청/목록/승인/반려/취소)
+forms.py — 신청 폼
+urls.py — URL 라우팅
+
+템플릿 (화면)
+leave_form.html — 휴가 신청 폼
+leave_list.html — 신청 목록
+leave_approve_confirm.html — 승인 확인
+leave_reject.html — 반려 처리
+leave_cancel_confirm.html — 취소 확인
