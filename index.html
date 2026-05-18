@@ -132,11 +132,11 @@
         </label>
         <label>
           Start Date
-          <input type="date" name="startDate" required />
+          <input type="date" name="startDate" id="startDate" required />
         </label>
         <label>
           End Date
-          <input type="date" name="endDate" required />
+          <input type="date" name="endDate" id="endDate" required />
         </label>
         <label class="full">
           Reason
@@ -176,6 +176,8 @@
     const tableBody = document.getElementById('requestsTableBody');
 
     const STORAGE_KEY = 'hospitalLeaveRequests';
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
 
     function loadRequests() {
       try {
@@ -225,10 +227,18 @@
         endDate: String(formData.get('endDate')).trim(),
         reason: String(formData.get('reason')).trim(),
         emergencyContact: String(formData.get('emergencyContact')).trim(),
-        submittedAt: new Date().toLocaleString(),
+        submittedAt: new Date().toISOString(),
       };
 
-      if (request.endDate < request.startDate) {
+      const startDate = new Date(request.startDate);
+      const endDate = new Date(request.endDate);
+
+      startDateInput.removeAttribute('aria-invalid');
+      endDateInput.removeAttribute('aria-invalid');
+
+      if (endDate < startDate) {
+        startDateInput.setAttribute('aria-invalid', 'true');
+        endDateInput.setAttribute('aria-invalid', 'true');
         message.textContent = 'End date must be on or after start date.';
         return;
       }

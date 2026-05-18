@@ -4,4 +4,4 @@ Internal hospital leave request website.
 
 ## Usage
 
-Open `/home/runner/work/WEB/WEB/index.html` in a browser on the hospital internal network.
+Deploy and open `index.html` on the hospital internal web server or internal network file share.
